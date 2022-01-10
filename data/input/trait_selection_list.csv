@@ -1,0 +1,106 @@
+Variable.ID,imaging.modality,imaging.view,trait.type,Selection
+top.geometry.fluo.area (px^2),FLUOR,TOP,biomass-related,YES
+top.geometry.fluo.area.norm (mm^2),FLUOR,TOP,biomass-related,NO
+top.geometry.fluo.border.length (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.border.length.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.branchpoint.count,FLUOR,TOP,architectural,YES
+top.geometry.fluo.circumcircle.d (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.circumcircle.d.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.compactness.01,FLUOR,TOP,architectural,NO
+top.geometry.fluo.compactness.16,FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.area (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.area.norm (mm^2),FLUOR,TOP,architectural,NO
+top.geometry.fluo.hull.centroid.x (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.centroid.y (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.circularity,FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.compactness.01,FLUOR,TOP,architectural,NO
+top.geometry.fluo.hull.compactness.16,FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.fillgrade (%),FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.length,FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.length.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.hull.pc1 (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.pc1.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.hull.pc2 (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.hull.pc2.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.hull.points,FLUOR,TOP,architectural,YES
+top.geometry.fluo.leaf.count,FLUOR,TOP,architectural,YES
+top.geometry.fluo.leaf.curvature.avg,FLUOR,TOP,architectural,YES
+top.geometry.fluo.leaf.curvature.sum,FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaf.length.mean (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.leaf.length.mean.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaf.length.sum (px),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaf.length.sum.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaf.width.mean (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.leaf.width.mean.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.corner.angle.mean (degree),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.corner.angle.mean.kurtosis,FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.corner.angle.skewness,FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.corner.angle.stdev,FLUOR,TOP,architectural,NO
+top.geometry.vis.leaftip.count (leaftips),RGB,TOP,architectural,YES
+top.geometry.fluo.leaftip.outlier.count (leaftips),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.width_near_tip.kurtosis,FLUOR,TOP,architectural,NO
+top.geometry.vis.leaftip.width_near_tip.mean (px),RGB,TOP,architectural,NO
+top.geometry.fluo.leaftip.width_near_tip.n (leaftips),FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.width_near_tip.skewness,FLUOR,TOP,architectural,NO
+top.geometry.fluo.leaftip.width_near_tip.stdev,FLUOR,TOP,architectural,NO
+top.geometry.fluo.minrectangle.area (px),FLUOR,TOP,architectural,NO
+top.geometry.fluo.minrectangle.area.norm (mm^2),FLUOR,TOP,architectural,NO
+top.geometry.fluo.minrectangle.length.a (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.minrectangle.length.a.norm (mm),FLUOR,TOP,architectural,NO
+top.geometry.fluo.minrectangle.length.b (px),FLUOR,TOP,architectural,YES
+top.geometry.fluo.minrectangle.length.b.norm (mm),FLUOR,TOP,architectural,NO
+top.intensity.fluo.hsv.h.mean,FLUOR,TOP,color,YES
+top.intensity.fluo.hsv.h.skewness,FLUOR,TOP,color,NO
+top.intensity.fluo.hsv.h.stddev,FLUOR,TOP,color,NO
+top.intensity.fluo.hsv.s.mean,FLUOR,TOP,color,YES
+top.intensity.fluo.hsv.s.skewness,FLUOR,TOP,color,NO
+top.intensity.fluo.hsv.s.stddev,FLUOR,TOP,color,NO
+top.intensity.fluo.hsv.v.mean,FLUOR,TOP,color,YES
+top.intensity.fluo.hsv.v.skewness,FLUOR,TOP,color,NO
+top.intensity.fluo.hsv.v.stddev,FLUOR,TOP,color,NO
+top.intensity.fluo.intensity.chlorophyl.mean,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.chlorophyl.sum,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.classic.mean,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.classic.sum,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.mean,FLUOR,TOP,intensity,YES
+top.intensity.fluo.intensity.phenol.chlorophyl.ratio,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.phenol.mean,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.phenol.plant_weight,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.phenol.plant_weight_drought_loss,FLUOR,TOP,intensity,NO
+top.intensity.fluo.intensity.phenol.sum,FLUOR,TOP,intensity,NO
+top.intensity.fluo.lab.a.mean,FLUOR,TOP,color,YES
+top.intensity.fluo.lab.a.skewness,FLUOR,TOP,color,NO
+top.intensity.fluo.lab.a.stddev,FLUOR,TOP,color,NO
+top.intensity.fluo.lab.b.mean,FLUOR,TOP,color,YES
+top.intensity.fluo.lab.b.skewness,FLUOR,TOP,color,NO
+top.intensity.fluo.lab.b.stddev,FLUOR,TOP,color,NO
+top.intensity.fluo.lab.l.mean,FLUOR,TOP,color,YES
+top.intensity.fluo.lab.l.skewness,FLUOR,TOP,color,NO
+top.intensity.fluo.lab.l.stddev,FLUOR,TOP,color,NO
+top.intensity.nir.mean,NIR,TOP,intensity,YES
+top.intensity.vis.hsv.dgci.mean,RGB,TOP,color,NO
+top.intensity.vis.hsv.h.brown2green,RGB,TOP,color,YES
+top.intensity.vis.hsv.h.mean,RGB,TOP,color,YES
+top.intensity.vis.hsv.h.red2green,RGB,TOP,color,YES
+top.intensity.vis.hsv.h.skewness,RGB,TOP,color,NO
+top.intensity.vis.hsv.h.stddev,RGB,TOP,color,NO
+top.intensity.vis.hsv.h.yellow2green,RGB,TOP,color,YES
+top.intensity.vis.hsv.s.mean,RGB,TOP,color,YES
+top.intensity.vis.hsv.s.skewness,RGB,TOP,color,NO
+top.intensity.vis.hsv.s.stddev,RGB,TOP,color,NO
+top.intensity.vis.hsv.v.mean,RGB,TOP,color,YES
+top.intensity.vis.hsv.v.skewness,RGB,TOP,color,NO
+top.intensity.vis.hsv.v.stddev,RGB,TOP,color,NO
+top.intensity.vis.lab.a.mean,RGB,TOP,color,YES
+top.intensity.vis.lab.a.skewness,RGB,TOP,color,NO
+top.intensity.vis.lab.a.stddev,RGB,TOP,color,NO
+top.intensity.vis.lab.b.mean,RGB,TOP,color,YES
+top.intensity.vis.lab.b.skewness,RGB,TOP,color,NO
+top.intensity.vis.lab.b.stddev,RGB,TOP,color,NO
+top.intensity.vis.lab.l.mean,RGB,TOP,color,YES
+top.intensity.vis.lab.l.skewness,RGB,TOP,color,NO
+top.intensity.vis.lab.l.stddev,RGB,TOP,color,NO
+top.intensity.vis.rgb.blue.mean,RGB,TOP,color,YES
+top.intensity.vis.rgb.green.mean,RGB,TOP,color,YES
+top.intensity.vis.rgb.red.mean,RGB,TOP,color,YES
+top.optics.vis.marker.horizontal_distance (px),RGB,TOP,optics,NO
