@@ -16,7 +16,7 @@ row.names(mothertable.counts) <- mothertable$target_id
 mothertable.transposed = as.data.frame(t(mothertable.counts))
 mothertable.transposed$Mothertable.ID = row.names(mothertable.transposed)
 
-write.csv(mothertable.transposed, "data/intermediary_data/mothertable_transposed.csv")
+write.csv(mothertable.transposed, "data/intermediary/mothertable_transposed.csv")
 
 # Load the traits we want to look at
 important.traits = read.csv("data/results/trait_selection_result_roughFixed.csv")
