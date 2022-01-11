@@ -121,7 +121,9 @@ for(trait in important.traits) {
     data.train = mothertable.forBoruta[-i,]
     data.test  = mothertable.forBoruta[i,]
     
-    selected.features = runBoruta(trait, data.train)$gene
+    boruta.result = runBoruta(trait, data.train)
+    write.csv(boruta.result, paste0("data/results/cv/selected_genes/", trait, "_", i, ".csv"), row.names=F)
+    selected.features = boruta.result$gene
     
     # Build model and predict
     data.train.x = subset(data.train, select = selected.features)
