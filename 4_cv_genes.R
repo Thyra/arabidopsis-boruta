@@ -8,12 +8,12 @@ set.seed(582477)
 mothertable = read.csv("data/input/curated_mothertable20200515.lfs.txt.gz", sep="\t")
 # Remove any genes are not differentially expressed between drought and WW treatment
 mothertable = mothertable[mothertable$differentialinatleastoneconstrast == "TRUE",]
-# We're only using the count values for now, not the TPMs (originally we used TPMs but it appears that Stephan used counts)
-mothertable.counts = mothertable[4:42]
-colnames(mothertable.counts) <- sub("_count$", "", colnames(mothertable.counts)) # remove _count from the end of the columns
-row.names(mothertable.counts) <- mothertable$target_id
+# We're only using the TPM values (Stephan used counts but Andrea suggested to go with TPM)
+mothertable.tpm = mothertable[43:81]
+colnames(mothertable.tpm) <- sub("_tpm$", "", colnames(mothertable.tpm)) # remove _count from the end of the columns
+row.names(mothertable.tpm) <- mothertable$target_id
 # Transpose it so that we have "HarvestX_repY" --> "Gene 1", "Gene 2", ...
-mothertable.transposed = as.data.frame(t(mothertable.counts))
+mothertable.transposed = as.data.frame(t(mothertable.tpm))
 mothertable.transposed$Mothertable.ID = row.names(mothertable.transposed)
 
 write.csv(mothertable.transposed, "data/intermediary/mothertable_transposed.csv")
