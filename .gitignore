@@ -1,3 +1,4 @@
 .DS_Store
 data/intermediary
+data/results/cv/selected_genes/
 .Rhistory

@@ -48,7 +48,7 @@ for(i in 1:nrow(mothertable.transposed)) {
   data.test  = mothertable.transposed[i,]
   
   boruta.result = runBoruta("Treatment", data.train)
-  write.csv(boruta.result, paste0("data/results/cv/selected_genes/treatment_from_genes_", i, ".csv"), row.names=F)
+  write.csv(boruta.result, paste0("data/results/cv/selected_genes/treatment_from_genes_", row.names(mothertable.transposed)[i], ".csv"), row.names=F)
   selected.features = boruta.result$gene
   
   # Only keep selected features
@@ -56,6 +56,6 @@ for(i in 1:nrow(mothertable.transposed)) {
   
   # Train the model and predict
   model = randomForest(data.train.x, data.train.y)
-  write(paste(i, as.character(data.test$Treatment), as.character(predict(model, newdata = subset(data.test, select = selected.features))), sep=","),file="data/results/cv/loocv_treatment_from_genes.csv",append = T)
+  write(paste(row.names(mothertable.transposed)[i], as.character(data.test$Treatment), as.character(predict(model, newdata = subset(data.test, select = selected.features))), sep=","),file="data/results/cv/loocv_treatment_from_genes.csv",append = T)
 }
 
