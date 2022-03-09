@@ -1,74 +1,102 @@
-# This script prepares the input data from 1745AJ for important trait selection by:
-# - filtering columns to only contain top view traits
-# - filter rows to start at DAS 21
-# - Geting rid of empty columns
-# - Filtering traits by the trait selection list
-# - VIF filtering the traits
-# - Reshaping the data to wide format (Trait X DAS)
-# - detect outliers (2 SDs below or above median) and replace with the median of that specific treatment and day
-# - remove any NA columns again
-# The result is then saved to data/intermediary/1745AJ_Phenotyping_nafixed.csv
-
-require('fmsb')
-require('randomForest')
+require('statgenHTP')
 
 data = read.csv("data/input/1745AJ_Phenotyping_formatted.lfs.csv.gz", sep=";")
 # Filter columns to only contain top view traits
-data = data[,c(1,6,10, grep("top.*", names(data)))]
-# Filter rows to only contain rows starting at DAS 21
-# this reduces our plant count to 113, sadly.
-# Also limit data to DAS 35
-data = data[data$DAS >= 21 & data$DAS <= 35,]
+data = data[,c(1,6,9,10,11, grep("top.*", names(data)))]
+# Filter rows to only contain those after the camera configuration shift and before baskets were installed
+data = data[data$DAS.FLOAT >= 20.43 & data$DAS <= 31,]
 # Get rid of columns that only contain NAs
 data = data[colSums(!is.na(data)) > 0]
 # Filter out any traits that don't have a YES in the trait selection list (either because they have a NO or because they're not present)
 trait_info = read.csv("data/input/trait_selection_list.csv")
 keep_columns = intersect(
   names(data),
-  c("Plant.ID", "Treatment", "DAS", make.names(trait_info[trait_info$Selection == "YES",]$Variable.ID)))
+  c("Plant.ID", "Treatment", "Time", "DAS", make.names(trait_info[trait_info$Selection == "YES",]$Variable.ID)))
 data = data[keep_columns]
 
-# Reshape data to wide format
-data = reshape(data, idvar='Plant.ID', timevar='DAS', v.names=setdiff(names(data), c("Plant.ID", "DAS", "Treatment")), direction='wide')
-# Drop the plant ID
-data = data[,setdiff(names(data), c("Plant.ID"))]
-# Get rid of columns that only contain NAs (again)
-data = data[colSums(!is.na(data)) > 0]
+## Outlier Detection with statgenHTP
 
-#### ------  OUTLIER DETECTION  --------- ###
-data$Treatment = as.factor(data$Treatment)
-data.drought = data[data$Treatment == "D",]
-data.well_watered = data[data$Treatment == "WW",]
+# First we'll add some positional columns (row and column)
+data$plant.id = as.numeric(substr(data$Plant.ID, 7,9))
+data$print.pot_row = floor((data$plant.id -1) / 32)+1
+data$print.pot_column = floor((data$plant.id -1) %% 32)+1
+# For every second row the trays should start from the right because the lanes are connected in one big curve
+data[data$print.pot_row %% 2 == 0,]$print.pot_column = 34 - data[data$print.pot_row %% 2 == 0,]$print.pot_column
+# Make a lane between row 6 and 7
+data[data$print.pot_row > 6,]$print.pot_row = data[data$print.pot_row > 6,]$print.pot_row + 1
 
-# Outlier detection -> replace with NA's which are then replaced with medians in following step.
-medians = apply(data.drought[,setdiff(names(data.drought), c("Treatment"))], 2, FUN=median, na.rm=T)
-sds = apply(data.drought[,setdiff(names(data.drought), c("Treatment"))], 2, FUN=sd, na.rm=T)
-for(traitname in names(data.drought[,setdiff(names(data.drought), c("Treatment"))])) {
-  print(traitname)
-  if(nrow(data.drought[which(data.drought[traitname] > medians[traitname]+2*sds[traitname] | data.drought[traitname] < medians[traitname]-2*sds[traitname]), ]) > 0)
-    data.drought[which(data.drought[traitname] > medians[traitname]+2*sds[traitname] | data.drought[traitname] < medians[traitname]-2*sds[traitname]), ][traitname] <- NA
+phenoTP <- createTimePoints(dat = data,
+                            experimentName = "1745AJ",
+                            genotype = "Treatment",
+                            timePoint = "Time",
+                            timeFormat = "%d.%m.%y",
+                            repId = "plant.id",
+                            plotId = "Plant.ID",
+                            rowNum = "print.pot_row", colNum = "print.pot_column"
+                            )
+for(trait in c("top.geometry.fluo.area..px.2.", "top.geometry.fluo.leaf.count",
+               "top.geometry.fluo.hull.length", "top.intensity.nir.mean", "top.intensity.vis.hsv.h.mean", "top.intensity.vis.hsv.s.mean",
+               "top.intensity.vis.hsv.v.mean", "top.intensity.vis.hsv.h.yellow2green", "top.intensity.fluo.intensity.mean")) {
+  plot(phenoTP, 
+       traits = trait,
+       plotType = "raw", plotLine=T)
+  
+  # Single outlier points
+  # plot(phenoTP, 
+  #      traits = "top.intensity.fluo.hsv.v.mean",
+  #      plotType = "raw", plotLine=T)
+  # 
+  # singleOut <- detectSingleOut(TP = phenoTP,
+  #                              trait = "top.intensity.fluo.hsv.v.mean",
+  #                              confIntSize = 3,
+  #                              nnLocfit = 0.3)
+  # plot(singleOut, outOnly = FALSE)
+  
+  
+  # Whole Series
+  fit.spline <- fitSpline(inDat = as.data.frame(phenoTP),
+                          trait = trait,
+                          genotypes = "WW",
+                          knots = 50,
+                          useTimeNumber = TRUE,
+                          timeNumber = "DAS")
+  predDat <- fit.spline$predDat
+  coefDat <- fit.spline$coefDat
+  
+  outVator <- detectSerieOut(corrDat = as.data.frame(phenoTP),
+                             predDat = predDat,
+                             coefDat = coefDat,
+                             trait = trait,
+                             genotypes = "WW",
+                             thrCor = 0.8,
+                             thrPca = 30,
+                             thrSlope = 0.7)
+  plot(outVator)
+  
+  fit.spline <- fitSpline(inDat = as.data.frame(phenoTP),
+                          trait = trait,
+                          genotypes = "D",
+                          knots = 50,
+                          useTimeNumber = TRUE,
+                          timeNumber = "DAS")
+  predDat <- fit.spline$predDat
+  coefDat <- fit.spline$coefDat
+  
+  outVator <- detectSerieOut(corrDat = as.data.frame(phenoTP),
+                             predDat = predDat,
+                             coefDat = coefDat,
+                             trait = trait,
+                             genotypes = "D",
+                             thrCor = 0.8,
+                             thrPca = 30,
+                             thrSlope = 0.7)
+  plot(outVator)
+  
+  readline(prompt="Next trait?")
 }
 
-# Remove NA's, currently just by replacing with column median but might want to use a more sophisticated
-# method like rfImpute that weighs by proximity.
-data.drought = na.roughfix(data.drought)
+# Based on the plots above, I'm taking out plant 188 and 085
+data = data[!data$Plant.ID %in% c("1745AJ188", "1745AJ085"),]
 
-# Outlier detection -> replace with NA's which are then replaced with medians in following step.
-medians = apply(data.well_watered[,setdiff(names(data.well_watered), c("Treatment"))], 2, FUN=median, na.rm=T)
-sds = apply(data.well_watered[,setdiff(names(data.well_watered), c("Treatment"))], 2, FUN=sd, na.rm=T)
-for(traitname in names(data.well_watered[,setdiff(names(data.well_watered), c("Treatment"))])) {
-  print(traitname)
-  if(nrow(data.well_watered[which(data.well_watered[traitname] > medians[traitname]+2*sds[traitname] | data.well_watered[traitname] < medians[traitname]-2*sds[traitname]), ]) > 0)
-    data.well_watered[which(data.well_watered[traitname] > medians[traitname]+2*sds[traitname] | data.well_watered[traitname] < medians[traitname]-2*sds[traitname]), ][traitname] <- NA
-}
-
-# Remove NA's, currently just by replacing with column median but might want to use a more sophisticated
-# method like rfImpute that weighs by proximity.
-data.well_watered = na.roughfix(data.well_watered)
-
-# Combine drought and well-watered data again
-data.nafixed = rbind(data.drought, data.well_watered)
-# Get rid of columns that contain NAs (because they were dropped for one treatment)
-data.nafixed = data.nafixed[colSums(!is.na(data.nafixed)) == nrow(data.nafixed)]
-
-write.csv(data.nafixed, "data/intermediary/1745AJ_Phenotyping_nafixed.csv", row.names=F)
+out = data[,!(names(data) %in% c("plant.id", "print.pot_row", "print.pot_column"))]
+write.csv(out, "data/intermediary/1745AJ_Phenotyping_cleaned.csv", row.names=F)
