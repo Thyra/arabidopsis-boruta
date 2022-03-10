@@ -1,5 +1,6 @@
 require('statgenHTP')
-
+require('stringr')
+# ----- Phenotyping Data ----------------------
 data = read.csv("data/input/1745AJ_Phenotyping_formatted.lfs.csv.gz", sep=";")
 # Filter columns to only contain top view traits
 data = data[,c(1,6,9,10,11, grep("top.*", names(data)))]
@@ -98,5 +99,30 @@ for(trait in c("top.geometry.fluo.area..px.2.", "top.geometry.fluo.leaf.count",
 # Based on the plots above, I'm taking out plant 188 and 085
 data = data[!data$Plant.ID %in% c("1745AJ188", "1745AJ085"),]
 
-out = data[,!(names(data) %in% c("plant.id", "print.pot_row", "print.pot_column"))]
+out = data[,!(names(data) %in% c("Time", "plant.id", "print.pot_row", "print.pot_column"))]
 write.csv(out, "data/intermediary/1745AJ_Phenotyping_cleaned.csv", row.names=F)
+
+# ------- RNASeq-Data --------
+mothertable = read.csv("data/input/curated_mothertable20200515.lfs.txt.gz", sep="\t")
+# Remove any genes are not differentially expressed between drought and WW treatment
+mothertable = mothertable[mothertable$differentialinatleastoneconstrast == "TRUE",]
+# We're only using the TPM values (Stephan used counts but Andrea suggested to go with TPM)
+mothertable.tpm = mothertable[43:81]
+colnames(mothertable.tpm) <- sub("_tpm$", "", colnames(mothertable.tpm)) # remove _tpm from the end of the columns
+row.names(mothertable.tpm) <- mothertable$target_id
+# Transpose it so that we have "HarvestX_repY" --> "Gene 1", "Gene 2", ...
+mothertable.transposed = as.data.frame(t(mothertable.tpm))
+mothertable.transposed$Mothertable.ID = row.names(mothertable.transposed)
+# Add day and treatment info
+mothertable.transposed$day = as.numeric(str_split_fixed(str_split_fixed(mothertable.transposed$Mothertable.ID, "_", 3)[,1], "d" ,2)[,2])
+mothertable.transposed$treatment = str_split_fixed(mothertable.transposed$Mothertable.ID, "_", 3)[,2]
+
+# Copy the WW samples from 15 DAS as D samples as well to give a good start point (there is no drought stress there for sure)
+add = mothertable.transposed[mothertable.transposed$day == 15,]
+add$treatment = "D"
+mothertable.transposed = rbind(mothertable.transposed, add)
+
+mothertable.transposed = mothertable.transposed[c((ncol(mothertable.transposed)-2):(ncol(mothertable.transposed)), 1:(ncol(mothertable.transposed)-3))]
+write.csv(mothertable.transposed, "data/intermediary/mothertable_transposed.csv", row.names=F)
+
+
