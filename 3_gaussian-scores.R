@@ -10,6 +10,7 @@ mothertable.transposed = mothertable.transposed[mothertable.transposed$day < 31 
 # FOR TEST PURPOSES: ONLY DO FIRST 300 genes!
 mothertable.transposed = mothertable.transposed[1:303]
 
+pdf("plots/gaussian-curves_genes.lfs.pdf")
 gene.scores = as.data.frame(sapply(names(mothertable.transposed)[4:ncol(mothertable.transposed)], function(gene) {
   print(gene)
   tryCatch(
@@ -26,6 +27,7 @@ gene.scores = as.data.frame(sapply(names(mothertable.transposed)[4:ncol(motherta
     }
   )
 }))
+dev.off()
 gene.scores$day = seq(14,max(mothertable.transposed$day),1/8)
 gene.scores = gene.scores[gene.scores$day <= 30,]
 gene.scores = gene.scores[c(ncol(gene.scores), (1:ncol(gene.scores)-1))]
@@ -34,6 +36,7 @@ write.csv(gene.scores, "data/results/gaussian-scores/gene_scores.lfs.csv", row.n
 
 trait_importance = read.csv("data/results/trait_selection_result_roughFixed.csv")
 important.traits = unique(sub("\\.\\d+$", "", trait_importance[trait_importance$decision == "Confirmed",]$trait))
+pdf("plots/gaussian-scores_traits.pdf")
 trait.scores = as.data.frame(sapply(important.traits, function(trait) {
   print(trait)
   ctrl = pheno[pheno$Treatment == "WW", c("DAS", trait)]
@@ -44,6 +47,7 @@ trait.scores = as.data.frame(sapply(important.traits, function(trait) {
   plot(res, plotratios = "npc")
   (res$casemodel$targets$pmean - res$ctrlmodel$targets$pmean) * exp(res$ratios$npc)
 }))
+dev.off()
 trait.scores$day = seq(20,30,1/8)
 trait.scores = trait.scores[c(ncol(trait.scores), (1:ncol(trait.scores)-1))]
 
