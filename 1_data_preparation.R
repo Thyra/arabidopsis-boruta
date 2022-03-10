@@ -1,5 +1,7 @@
-require('statgenHTP')
 require('stringr')
+
+OUTLIER.PLOTS = F
+
 # ----- Phenotyping Data ----------------------
 data = read.csv("data/input/1745AJ_Phenotyping_formatted.lfs.csv.gz", sep=";")
 # Filter columns to only contain top view traits
@@ -26,75 +28,80 @@ data[data$print.pot_row %% 2 == 0,]$print.pot_column = 34 - data[data$print.pot_
 # Make a lane between row 6 and 7
 data[data$print.pot_row > 6,]$print.pot_row = data[data$print.pot_row > 6,]$print.pot_row + 1
 
-phenoTP <- createTimePoints(dat = data,
-                            experimentName = "1745AJ",
-                            genotype = "Treatment",
-                            timePoint = "Time",
-                            timeFormat = "%d.%m.%y",
-                            repId = "plant.id",
-                            plotId = "Plant.ID",
-                            rowNum = "print.pot_row", colNum = "print.pot_column"
-                            )
-for(trait in c("top.geometry.fluo.area..px.2.", "top.geometry.fluo.leaf.count",
-               "top.geometry.fluo.hull.length", "top.intensity.nir.mean", "top.intensity.vis.hsv.h.mean", "top.intensity.vis.hsv.s.mean",
-               "top.intensity.vis.hsv.v.mean", "top.intensity.vis.hsv.h.yellow2green", "top.intensity.fluo.intensity.mean")) {
-  plot(phenoTP, 
-       traits = trait,
-       plotType = "raw", plotLine=T)
+if(OUTLIER.PLOTS) {
+  require('statgenHTP')
   
-  # Single outlier points
-  # plot(phenoTP, 
-  #      traits = "top.intensity.fluo.hsv.v.mean",
-  #      plotType = "raw", plotLine=T)
-  # 
-  # singleOut <- detectSingleOut(TP = phenoTP,
-  #                              trait = "top.intensity.fluo.hsv.v.mean",
-  #                              confIntSize = 3,
-  #                              nnLocfit = 0.3)
-  # plot(singleOut, outOnly = FALSE)
-  
-  
-  # Whole Series
-  fit.spline <- fitSpline(inDat = as.data.frame(phenoTP),
-                          trait = trait,
-                          genotypes = "WW",
-                          knots = 50,
-                          useTimeNumber = TRUE,
-                          timeNumber = "DAS")
-  predDat <- fit.spline$predDat
-  coefDat <- fit.spline$coefDat
-  
-  outVator <- detectSerieOut(corrDat = as.data.frame(phenoTP),
-                             predDat = predDat,
-                             coefDat = coefDat,
-                             trait = trait,
-                             genotypes = "WW",
-                             thrCor = 0.8,
-                             thrPca = 30,
-                             thrSlope = 0.7)
-  plot(outVator)
-  
-  fit.spline <- fitSpline(inDat = as.data.frame(phenoTP),
-                          trait = trait,
-                          genotypes = "D",
-                          knots = 50,
-                          useTimeNumber = TRUE,
-                          timeNumber = "DAS")
-  predDat <- fit.spline$predDat
-  coefDat <- fit.spline$coefDat
-  
-  outVator <- detectSerieOut(corrDat = as.data.frame(phenoTP),
-                             predDat = predDat,
-                             coefDat = coefDat,
-                             trait = trait,
-                             genotypes = "D",
-                             thrCor = 0.8,
-                             thrPca = 30,
-                             thrSlope = 0.7)
-  plot(outVator)
-  
-  readline(prompt="Next trait?")
+  phenoTP <- createTimePoints(dat = data,
+                              experimentName = "1745AJ",
+                              genotype = "Treatment",
+                              timePoint = "Time",
+                              timeFormat = "%d.%m.%y",
+                              repId = "plant.id",
+                              plotId = "Plant.ID",
+                              rowNum = "print.pot_row", colNum = "print.pot_column"
+  )
+  for(trait in c("top.geometry.fluo.area..px.2.", "top.geometry.fluo.leaf.count",
+                 "top.geometry.fluo.hull.length", "top.intensity.nir.mean", "top.intensity.vis.hsv.h.mean", "top.intensity.vis.hsv.s.mean",
+                 "top.intensity.vis.hsv.v.mean", "top.intensity.vis.hsv.h.yellow2green", "top.intensity.fluo.intensity.mean")) {
+    plot(phenoTP, 
+         traits = trait,
+         plotType = "raw", plotLine=T)
+    
+    # Single outlier points
+    # plot(phenoTP, 
+    #      traits = "top.intensity.fluo.hsv.v.mean",
+    #      plotType = "raw", plotLine=T)
+    # 
+    # singleOut <- detectSingleOut(TP = phenoTP,
+    #                              trait = "top.intensity.fluo.hsv.v.mean",
+    #                              confIntSize = 3,
+    #                              nnLocfit = 0.3)
+    # plot(singleOut, outOnly = FALSE)
+    
+    
+    # Whole Series
+    fit.spline <- fitSpline(inDat = as.data.frame(phenoTP),
+                            trait = trait,
+                            genotypes = "WW",
+                            knots = 50,
+                            useTimeNumber = TRUE,
+                            timeNumber = "DAS")
+    predDat <- fit.spline$predDat
+    coefDat <- fit.spline$coefDat
+    
+    outVator <- detectSerieOut(corrDat = as.data.frame(phenoTP),
+                               predDat = predDat,
+                               coefDat = coefDat,
+                               trait = trait,
+                               genotypes = "WW",
+                               thrCor = 0.8,
+                               thrPca = 30,
+                               thrSlope = 0.7)
+    plot(outVator)
+    
+    fit.spline <- fitSpline(inDat = as.data.frame(phenoTP),
+                            trait = trait,
+                            genotypes = "D",
+                            knots = 50,
+                            useTimeNumber = TRUE,
+                            timeNumber = "DAS")
+    predDat <- fit.spline$predDat
+    coefDat <- fit.spline$coefDat
+    
+    outVator <- detectSerieOut(corrDat = as.data.frame(phenoTP),
+                               predDat = predDat,
+                               coefDat = coefDat,
+                               trait = trait,
+                               genotypes = "D",
+                               thrCor = 0.8,
+                               thrPca = 30,
+                               thrSlope = 0.7)
+    plot(outVator)
+    
+    readline(prompt="Next trait?")
+  }
 }
+
 
 # Based on the plots above, I'm taking out plant 188 and 085
 data = data[!data$Plant.ID %in% c("1745AJ188", "1745AJ085"),]

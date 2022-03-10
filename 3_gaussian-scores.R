@@ -1,4 +1,5 @@
 library(nsgp)
+library(stringr)
 
 mothertable.transposed = read.csv("data/intermediary/mothertable_transposed.csv")
 pheno = read.csv("data/intermediary/1745AJ_Phenotyping_cleaned.csv")
@@ -31,8 +32,9 @@ gene.scores = gene.scores[c(ncol(gene.scores), (1:ncol(gene.scores)-1))]
 
 write.csv(gene.scores, "data/results/gaussian-scores/gene_scores.lfs.csv", row.names=F)
 
- 
-trait.scores = as.data.frame(sapply(c("top.intensity.vis.lab.a.mean"), function(trait) {
+trait_importance = read.csv("data/results/trait_selection_result_roughFixed.csv")
+important.traits = unique(sub("\\.\\d+$", "", trait_importance[trait_importance$decision == "Confirmed",]$trait))
+trait.scores = as.data.frame(sapply(important.traits, function(trait) {
   print(trait)
   ctrl = pheno[pheno$Treatment == "WW", c("DAS", trait)]
   names(ctrl) = c("day", "val")
