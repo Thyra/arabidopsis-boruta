@@ -7,8 +7,8 @@ pheno = read.csv("data/intermediary/1745AJ_Phenotyping_cleaned.csv")
 pheno = pheno[pheno$DAS < 31,]
 mothertable.transposed = mothertable.transposed[mothertable.transposed$day < 31 | mothertable.transposed$treatment == "WW",]
 
-# FOR TEST PURPOSES: ONLY DO FIRST 20 genes!
-mothertable.transposed = mothertable.transposed[1:23]
+# FOR TEST PURPOSES: ONLY DO FIRST 300 genes!
+mothertable.transposed = mothertable.transposed[1:303]
 
 gene.scores = as.data.frame(sapply(names(mothertable.transposed)[4:ncol(mothertable.transposed)], function(gene) {
   print(gene)

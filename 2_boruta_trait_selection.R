@@ -4,11 +4,12 @@
 library('Boruta')
 library('randomForest')
 library(caret)
+library(ggplot2)
 set.seed(17022019)
 
 data.cleaned = read.csv("data/intermediary/1745AJ_Phenotyping_cleaned.csv")
 # Cut off recovery phase
-data.cleaned = data.cleaned[data.cleaned$DAS < 31,]
+# data.cleaned = data.cleaned[data.cleaned$DAS < 31,]
 # Reshape data to wide format
 data = reshape(data.cleaned, idvar='Plant.ID', timevar='DAS', v.names=setdiff(names(data.cleaned), c("Plant.ID", "DAS", "Treatment", "Time")), direction='wide')
 # Drop the plant ID
@@ -98,4 +99,26 @@ draw_confusion_matrix <- function(cm) {
 }  
 pdf("plots/cv_results.pdf")
 draw_confusion_matrix(cm)
+dev.off()
+
+# ---- Importance plots ----
+# Plot importance over time per category
+trait.categories = read.csv("data/input/trait_selection_list.csv")
+trait.categories$Variable.ID = make.names(trait.categories$Variable.ID)
+trait.categories$Category = trait.categories$imaging.modality
+trait.categories[trait.categories$trait.type %in% c("architectural", "biomass-related"),]$Category = "architectural"
+
+selected.points = trait_importance_roughfixed[trait_importance_roughfixed$decision == "Confirmed", c("trait", "medianImp")]
+selected.points$trait.name = sub("\\.\\d+$", "", selected.points$trait)
+selected.points$DAS = as.numeric(gsub("^.*\\.", "", selected.points$trait))
+
+merged = merge(selected.points[c("trait.name", "DAS", "medianImp")], trait.categories[c("Variable.ID", "Category")], by.x="trait.name", by.y="Variable.ID")
+agg = aggregate(medianImp ~ Category + DAS, data=merged, FUN=sum)
+pdf("plots/aggregated_importances_per_category_and_day.pdf")
+p1 <- ggplot(agg, aes(DAS, medianImp, fill = Category)) +
+  geom_bar(stat="identity", position = "stack") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal() +
+  geom_segment(x = 30.5, xend=30.5, y=0, yend=45, linetype="dashed", color = "black", size=.7)
+print(p1)
 dev.off()
