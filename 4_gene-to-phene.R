@@ -2,6 +2,7 @@ library(dtw)
 library(Boruta)
 
 gene.scores = read.csv("data/results/gaussian-scores/gene_scores.lfs.csv")
+gene.scores = gene.scores[colSums(is.na(gene.scores)) == 0]
 trait.scores = read.csv("data/results/gaussian-scores/trait_scores.lfs.csv")
 
 # If there are any trait vals earlier than the earliest RNA-Seq val, cut them off (should not be the case)
@@ -13,6 +14,7 @@ trait.scores = trait.scores[trait.scores$day >= min(gene.scores$day),]
 window.offset = nrow(gene.scores[gene.scores$day < min(trait.scores$day),])
 
 dtw.distances = data.frame(trait=character(), gene=character(), distance=numeric())
+pdf("plots/dtw-curves.lfs.pdf")
 for(trait in names(trait.scores)[2:ncol(trait.scores)]) {
   for(gene in names(gene.scores)[2:ncol(gene.scores)]) {
     # Z normalize both curves
@@ -22,14 +24,15 @@ for(trait in names(trait.scores)[2:ncol(trait.scores)]) {
             # This window.type function ensures that trait values cannot be mapped to later RNA-Seq values,
             # as that makes no sense biologically (trait change cannot come from RNA-Seq change later on)
             window.type = function(iw, jw, query.size, reference.size) { iw >= (jw - window.offset) } )
-    plot(a, t, g, type="twoway", main=gene)
+    plot(a, t, g, type="twoway", main=paste(trait, gene))
     dtw.distances = rbind(dtw.distances, data.frame(trait=trait, gene=gene, distance=a$distance))
   }
 }
-
+dev.off()
 write.csv(dtw.distances, "data/results/gene-trait_dtw_distances.csv", row.names = F)
 
 # ----- Boruta -----
+set.seed(20220310)
 boruta.weights = dtw.distances = data.frame(trait=character(), gene=character(), medianImp=numeric())
 for(trait in names(trait.scores)[2:ncol(trait.scores)]) {
   boruta.df = merge(trait.scores[c("day", trait)], gene.scores)
