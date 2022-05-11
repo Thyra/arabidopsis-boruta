@@ -78,4 +78,4 @@ dev.off()
 # Remove diff values before day 21, because we don't really have any for day 20.
 pheno.curves[pheno.curves$day < 21,c("ww.diff.mean","ww.diff.std","d.diff.mean","d.diff.std")] = NA
 
-write.csv(trait.scores, "data/results/gaussian-process/trait_curves.lfs.csv", row.names=F)
+write.csv(pheno.curves, gzfile("data/results/gaussian-process/trait_curves.lfs.csv.gz"), row.names=F)
