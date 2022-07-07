@@ -1,5 +1,4 @@
-library(dtw)
-library(Boruta)
+library(lmtest)
 
 trait.curves = read.csv("data/results/gaussian-process/trait_curves.lfs.csv.gz")
 gene.curves  = read.csv("data/results/gaussian-process/gene_curves.lfs.csv.gz")
@@ -25,7 +24,9 @@ align_curves <- function(ref, bait, weights.ref, weights.bait) {
       optimal.offset = o
     }
   }
-  return(list(offset = optimal.offset, dist = min.dist, ref=ref, bait=bait))
+  # Max p-value of granger tests for both treatments at optimal offset with order=2 (should be able to predict both treatments)
+  p.val =  max(c(grangertest(ref[(1+optimal.offset):(optimal.offset+nrow(bait)),1], bait[,1], order=2)$`Pr(>F)`[2], grangertest(ref[(1+optimal.offset):(optimal.offset+nrow(bait)),2], bait[,2], order=2)$`Pr(>F)`[2]))
+  return(list(offset = optimal.offset, dist = min.dist, granger.p.val = p.val, ref=ref, bait=bait))
 }
 
 # Calculate coefficients of variation (mean of both treatments) to use for weighting the time points
@@ -33,37 +34,38 @@ gene.curves$avg.cv = (gene.curves$ww.std/gene.curves$ww.mean + gene.curves$d.std
 trait.curves$avg.cv = (trait.curves$ww.std/trait.curves$ww.mean + trait.curves$d.std/trait.curves$d.mean)/2
 trait.curves$avg.diff.cv = (trait.curves$ww.diff.std/abs(trait.curves$ww.diff.mean) + trait.curves$d.diff.std/abs(trait.curves$d.diff.mean))/2
 
-curve.distances = data.frame(trait=character(), gene=character(), trait.mode=character(), gene.mode=character(), dist=numeric(), offset=numeric())
+curve.distances = data.frame(trait=character(), gene=character(), trait.mode=character(), gene.mode=character(), dist=numeric(), granger.p.val = numeric(), offset=numeric())
 # @TODO make this into apply or something
 for(trait in unique(trait.curves$trait)) {
   print(trait)
   trait.vals = scale(trait.curves[trait.curves$trait == trait,c("ww.mean", "d.mean")])
-  trait.cv = trait.curves[trait.curves$trait == trait,]$avg.cv
+  trait.cv = scale(trait.curves[trait.curves$trait == trait,]$avg.cv, center=F)
   trait.diff.vals = na.omit(scale(trait.curves[trait.curves$trait == trait,c("ww.diff.mean", "d.diff.mean")]))
-  trait.diff.cv = na.omit(trait.curves[trait.curves$trait == trait,]$avg.diff.cv)
+  trait.diff.cv = na.omit(scale(trait.curves[trait.curves$trait == trait,]$avg.diff.cv, center=F))
   for(gene in unique(gene.curves$gene)) {
     gene.vals = scale(gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
-    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    gene.cv = scale(gene.curves[gene.curves$gene == gene,]$avg.cv, center=F)
     a = align_curves(gene.vals, trait.vals, 1/gene.cv, 1/trait.cv)
     curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="normal",gene.mode="normal",
-                                                  dist=a$dist, offset=a$offset))
+                                                  dist=a$dist, granger.p.val=a$granger.p.val, offset=a$offset))
     gene.vals = scale(-gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
-    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    gene.cv = scale(gene.curves[gene.curves$gene == gene,]$avg.cv, center=F)
     a = align_curves(gene.vals, trait.vals, 1/gene.cv, 1/trait.cv)
     curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="normal",gene.mode="inverted",
-                                                  dist=a$dist, offset=a$offset))
+                                                  dist=a$dist, granger.p.val=a$granger.p.val, offset=a$offset))
     
     gene.vals = scale(gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
-    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    gene.cv = scale(gene.curves[gene.curves$gene == gene,]$avg.cv, center=F)
     a = align_curves(gene.vals, trait.diff.vals, 1/gene.cv, 1/trait.diff.cv)
     curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="diff",gene.mode="normal",
-                                                  dist=a$dist, offset=a$offset))
+                                                  dist=a$dist, granger.p.val=a$granger.p.val, offset=a$offset))
     gene.vals = scale(-gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
-    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    gene.cv = scale(gene.curves[gene.curves$gene == gene,]$avg.cv, center=F)
     a = align_curves(gene.vals, trait.diff.vals, 1/gene.cv, 1/trait.diff.cv)
     curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="diff",gene.mode="inverted",
-                                                  dist=a$dist, offset=a$offset))
+                                                  dist=a$dist, granger.p.val=a$granger.p.val, offset=a$offset))
   }
+  write.csv(curve.distances, "data/results/gaussian-process/curve_distances.csv", row.names=F)
 }
 
 
@@ -74,12 +76,22 @@ plot_alignment <- function(a) {
   plot(x=seq_along(a$ref[,2]), y = a$ref[,2], type="l")
   lines(x=seq_along(a$bait[,2])+a$offset, y = a$bait[,2], lty=2)
 }
-
+# An example of how to use the plot function
+gene.vals = scale(-gene.curves[gene.curves$gene == "AT2G33830.2",c("ww.mean", "d.mean")])
+gene.cv = gene.curves[gene.curves$gene == "AT2G33830.2",]$avg.cv
+trait.diff.vals = na.omit(scale(trait.curves[trait.curves$trait == "top.intensity.vis.hsv.s.mean",c("ww.diff.mean", "d.diff.mean")]))
+trait.diff.cv = na.omit(trait.curves[trait.curves$trait == "top.intensity.vis.hsv.s.mean",]$avg.diff.cv)
+plot_alignment(align_curves(gene.vals, trait.diff.vals, 1/gene.cv, 1/trait.diff.cv))
+# OR
+plot_alignment(list(offset = 41, ref=gene.vals, bait=trait.diff.vals))
 
 write.csv(curve.distances, "data/results/gaussian-process/curve_distances.csv", row.names=F)
+
+
 quit()
 
 # ----- DTW ------
+library(dtw)
 # Now we want to know how many RNA-Seq time points we have before the traits start (min 0),
 # this is the offset to our window.type function below
 window.offset = nrow(gene.curves[gene.curves$day < min(trait.curves$day) & gene.curves$gene == sample(gene.curves$gene, 1),])
