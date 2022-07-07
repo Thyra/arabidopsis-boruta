@@ -7,6 +7,78 @@ gene.curves  = read.csv("data/results/gaussian-process/gene_curves.lfs.csv.gz")
 # If there are any trait vals earlier than the earliest RNA-Seq val, cut them off (should not be the case)
 trait.curves = trait.curves[trait.curves$day >= min(gene.curves$day),]
 
+# Weights is a vector with the same length as bait
+# ref needs to be longer than bait
+# WE SHOULD WRITE SOME UNIT TESTS FOR THIS! https://github.com/r-lib/vdiffr can even write tests for plot functions
+# Attention: we don't need a max offset limit as long as gene and trait vals stop at the same day.
+# Otherwise we do, in order to make sure gene on day 32 is not aligned with trait on day 30. (for example)
+# @TODO get the weight thingy right (they are different as they are moving, no?) --> I had weirdly negative distance values??
+align_curves <- function(ref, bait, weights.ref, weights.bait) {
+  optimal.offset = NA
+  min.dist = Inf
+  for(o in 0:(nrow(ref)-nrow(bait))) {
+    # Essentially Euclidian Distance weighted by weight vector
+    current.dist = sum(abs(ref[(1+o):(o+nrow(bait)),]-bait)*cbind(weights.ref[(1+o):(o+nrow(bait))], weights.bait))
+    #current.dist = sum(abs(ref[(1+o):(o+nrow(bait)),]-bait))
+    if(current.dist < min.dist) {
+      min.dist = current.dist
+      optimal.offset = o
+    }
+  }
+  return(list(offset = optimal.offset, dist = min.dist, ref=ref, bait=bait))
+}
+
+# Calculate coefficients of variation (mean of both treatments) to use for weighting the time points
+gene.curves$avg.cv = (gene.curves$ww.std/gene.curves$ww.mean + gene.curves$d.std/gene.curves$d.mean)/2
+trait.curves$avg.cv = (trait.curves$ww.std/trait.curves$ww.mean + trait.curves$d.std/trait.curves$d.mean)/2
+trait.curves$avg.diff.cv = (trait.curves$ww.diff.std/abs(trait.curves$ww.diff.mean) + trait.curves$d.diff.std/abs(trait.curves$d.diff.mean))/2
+
+curve.distances = data.frame(trait=character(), gene=character(), trait.mode=character(), gene.mode=character(), dist=numeric(), offset=numeric())
+# @TODO make this into apply or something
+for(trait in unique(trait.curves$trait)) {
+  print(trait)
+  trait.vals = scale(trait.curves[trait.curves$trait == trait,c("ww.mean", "d.mean")])
+  trait.cv = trait.curves[trait.curves$trait == trait,]$avg.cv
+  trait.diff.vals = na.omit(scale(trait.curves[trait.curves$trait == trait,c("ww.diff.mean", "d.diff.mean")]))
+  trait.diff.cv = na.omit(trait.curves[trait.curves$trait == trait,]$avg.diff.cv)
+  for(gene in unique(gene.curves$gene)) {
+    gene.vals = scale(gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
+    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    a = align_curves(gene.vals, trait.vals, 1/gene.cv, 1/trait.cv)
+    curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="normal",gene.mode="normal",
+                                                  dist=a$dist, offset=a$offset))
+    gene.vals = scale(-gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
+    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    a = align_curves(gene.vals, trait.vals, 1/gene.cv, 1/trait.cv)
+    curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="normal",gene.mode="inverted",
+                                                  dist=a$dist, offset=a$offset))
+    
+    gene.vals = scale(gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
+    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    a = align_curves(gene.vals, trait.diff.vals, 1/gene.cv, 1/trait.diff.cv)
+    curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="diff",gene.mode="normal",
+                                                  dist=a$dist, offset=a$offset))
+    gene.vals = scale(-gene.curves[gene.curves$gene == gene,c("ww.mean", "d.mean")])
+    gene.cv = gene.curves[gene.curves$gene == gene,]$avg.cv
+    a = align_curves(gene.vals, trait.diff.vals, 1/gene.cv, 1/trait.diff.cv)
+    curve.distances = rbind(curve.distances, list(trait=trait,gene=gene,trait.mode="diff",gene.mode="inverted",
+                                                  dist=a$dist, offset=a$offset))
+  }
+}
+
+
+plot_alignment <- function(a) {
+  par(mfrow=2:1, mar=c(0,0,0,0))
+  plot(x=seq_along(a$ref[,1]), y = a$ref[,1], type="l")
+  lines(x=seq_along(a$bait[,1])+a$offset, y = a$bait[,1], lty=2)
+  plot(x=seq_along(a$ref[,2]), y = a$ref[,2], type="l")
+  lines(x=seq_along(a$bait[,2])+a$offset, y = a$bait[,2], lty=2)
+}
+
+
+write.csv(curve.distances, "data/results/gaussian-process/curve_distances.csv", row.names=F)
+quit()
+
 # ----- DTW ------
 # Now we want to know how many RNA-Seq time points we have before the traits start (min 0),
 # this is the offset to our window.type function below
