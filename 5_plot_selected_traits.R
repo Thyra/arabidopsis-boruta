@@ -73,10 +73,7 @@ impCurves.color = aggregate(medianImp ~ trait.type + DAS + imaging.modality, dat
 impCurves.architectural$imaging.modality = "architectural (all)"
 impCurves = rbind(impCurves.architectural, impCurves.color)
 
-pdf("../results/Cumulative_Weights_per_day.pdf", width = 10)
-print(ggplot(impCurves, aes(DAS, medianImp, fill = imaging.modality)) +
-  geom_bar(stat="identity", position = "dodge") +
-  scale_fill_brewer(palette = "Set2"))
+pdf("plots/cumulated_trait_importance.pdf", width = 10)
 print(ggplot(impCurves, aes(DAS, medianImp, fill = imaging.modality)) +
         geom_bar(stat="identity", position = "stack") +
         scale_fill_manual(values=c("#009E73","#CC79A7","#0072B2","#D55E00"))) + labs(fill="Trait Category") +
