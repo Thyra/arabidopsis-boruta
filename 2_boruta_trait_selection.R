@@ -5,6 +5,10 @@ library('Boruta')
 set.seed(17022019)
 
 data.nafixed = read.csv("data/intermediary/1745AJ_Phenotyping_nafixed.csv")
+
+# Transform to wide format
+data.nafixed = reshape(data.nafixed, idvar='Plant.ID', timevar='DAS', v.names=setdiff(names(data.nafixed), c("Plant.ID", "DAS", "Treatment")), direction='wide', sep="_")
+data.nafixed = data.nafixed[-c(1)] # Drop Plant.ID
 data.nafixed$Treatment = as.factor(data.nafixed$Treatment)
 
 boruta_result = Boruta(Treatment ~ ., data=data.nafixed, maxRuns=1500, doTrace=2)
