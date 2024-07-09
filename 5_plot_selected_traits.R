@@ -3,8 +3,8 @@
 # - plot cumulative importance of all confirmed traitXDAS combinations by trait category over time
 
 traits = read.csv("data/results/trait_selection_result_roughFixed.csv")
-traits$trait.name = sub("\\.\\d+$", "", traits$trait)
-traits$DAS = gsub("^.*\\.", "", traits$trait)
+traits$trait.name = sub("_\\d+$", "", traits$trait)
+traits$DAS = gsub("^.*\\_", "", traits$trait)
 
 # Filter out traits which don't have Confirmed at any DAS
 # --> i.e. traits that are not important at any point in time

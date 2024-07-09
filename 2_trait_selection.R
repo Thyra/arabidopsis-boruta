@@ -1,7 +1,9 @@
-# This script performs a Boruta trait selection on the wide-shaped table in intermediary_data/1745AJ_Phenotyping_nafixed.csv
+# This script performs a Boruta trait selection on cleaned table in intermediary_data/1745AJ_Phenotyping_nafixed.csv
 # Results are saved unfixed and roughFixed (with or without Tentative decisions)
+# The script then performs a leave-one-out cross-validation to see how well the selected traits can predict the treatment class
 
 library('Boruta')
+library('randomForest')
 set.seed(17022019)
 
 data.nafixed = read.csv("data/intermediary/1745AJ_Phenotyping_nafixed.csv")
@@ -21,3 +23,19 @@ write.csv(trait_importance, "data/results/trait_selection_result.csv", row.names
 trait_importance_roughfixed = attStats(TentativeRoughFix(boruta_result))
 trait_importance_roughfixed = cbind(trait = rownames(trait_importance_roughfixed), trait_importance_roughfixed)
 write.csv(trait_importance_roughfixed, "data/results/trait_selection_result_roughFixed.csv", row.names=F)
+
+# Perform Leave-one-out cross-validation
+selected.features = trait_importance_roughfixed[trait_importance_roughfixed$decision == "Confirmed",]$trait
+data.nafixed = data.nafixed[,c("Treatment", selected.features)]
+write("i,Treatment,Prediction",file="data/results/cv/loocv_traits.csv")
+for(i in 1:nrow(data.nafixed)) {
+  # Split data into training set and test row
+  data.train   = data.nafixed[-i,]
+  data.train.x = subset(data.train, select = -c(Treatment) )
+  data.train.y = data.train$Treatment
+  data.test    = data.nafixed[i,]
+  
+  # Train the model and predict
+  model = randomForest(data.train.x, data.train.y)
+  write(paste(i, as.character(data.test$Treatment), as.character(predict(model, newdata = subset(data.test, select = selected.features))), sep=","),file="data/results/cv/loocv_traits.csv",append = T)
+}
