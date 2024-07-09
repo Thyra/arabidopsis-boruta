@@ -2,3 +2,4 @@
 data/intermediary
 data/results/cv/selected_genes/
 .Rhistory
+.lintr
