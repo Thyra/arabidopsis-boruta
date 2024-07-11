@@ -18,47 +18,39 @@ merged = merge(traits, trait_categories)
 
 # Load Phenotpying data
 pheno = read.csv("data/input/1745AJ_Phenotyping_formatted.lfs.csv.gz", sep=";")
-# Plot all the important traits
+# Limit to what I want to show
+pheno = pheno[pheno$DAS.FLOAT >= 10 & pheno$DAS <= 35,]
 
+# Plot all the important traits
 library(ggplot2)
 library(Rmisc)
 library(gridExtra)
+
+# Use the same color scheme as in Panel A
+color_stops = c(10, 16, 17, 20, 22, 24, 27, 30, 31, 34, 36)
+color_stops = (color_stops - 10)/26
+colors = c(
+  "#1d6bd7ff", "#1d6bd7ff", "#f9d984ff", "#f4b45fff", "#ef914fff", "#e45839ff", "#b82e26ff", "#891c23ff", "#6d998eff", "#4f919cff", "#347092ff"
+)
+
 pdf("plots/selected_traits.pdf", height=4)
 for(t in keep_traits) {
   cis = group.CI(get(t) ~ DAS + Treatment, pheno, ci=0.84)
   names(cis) = c("DAS", "Treatment", "upper", "mean", "lower")
   merged2 = merge(cis, traits[traits$trait.name == t,], by="DAS", all.x=T)
   merged2$impY = (merged2$medianImp/max(traits$medianImp, na.rm=T)) * (max(merged2$upper, na.rm=T) - min(merged2$lower, na.rm=T)) + min(merged2$lower, na.rm=T)
-  p1 <- ggplot(merged2, aes(x = DAS, y = mean, group = Treatment, color=Treatment)) +
+  merged2$color = merged2$DAS
+  merged2[merged2$Treatment == "WW",]$color = 10
+  p1 <- ggplot(merged2, aes(x = DAS, y = mean, group = Treatment, color=color)) +
     ggtitle(t) +
     geom_ribbon(aes(ymin = lower, ymax = upper, group=Treatment), fill="grey70", alpha=0.5, colour=NA) +
-    geom_line() +
+    geom_line(linewidth = 1.5) +
+    scale_colour_gradientn(values = color_stops , colors=colors) +
     geom_point(aes(x = DAS, y = impY), color="black") +
     theme_minimal() +
-#    theme(legend.position = "none") +
+    theme(legend.position = "none") +
     scale_y_continuous(sec.axis = sec_axis(trans=function(x) {(x - min(merged2$lower, na.rm=T))/(max(merged2$upper, na.rm=T) - min(merged2$lower, na.rm=T)) * max(traits$meanImp, na.rm=T)}, name = "Trait Importance"))
 
-  # Mean Differences
-  meanDiffs = as.data.frame(do.call(rbind, lapply(
-    split(pheno, pheno$DAS),
-    function(x) {
-      n.obs = aggregate(x[[t]], by=list(x$Treatment), FUN=function(y) length(which(!is.na(y))))$x
-      if(n.obs[1] < 2 | n.obs[2] < 2) {
-        c(NA, NA)
-      } else {
-        t.test(x[[t]] ~ x[["Treatment"]])$conf.int
-      }
-    }
-  )))
-  names(meanDiffs) = c("upper", "lower")
-  meanDiffs$DAS = as.integer(rownames(meanDiffs))
-  meanDiffs$mean = (meanDiffs$upper + meanDiffs$lower)/2
-  p2 <- ggplot(meanDiffs, aes(x = DAS, y = mean)) +
-          ggtitle("Difference in means (D - WW)") +
-          geom_ribbon(aes(ymin = lower, ymax = upper), fill="grey70", alpha=0.5, colour=NA) +
-          geom_line() +
-          geom_hline(yintercept=0)
-#  grid.arrange(p1, p2)
   print(p1)
 }
 dev.off()
