@@ -1,14 +1,6 @@
-# NOTE: This needs to be run with --max-ppsize=500000 because otherwise the pointer stack is too large and R will throw an error when running Boruta
 library("Boruta")
 library(randomForest)
-# You can use this seed to reproduce our exact results. If you change it, you might get a different set of genes
-# or gene-trait connections but they should be just as valid candidates for drought stress response/recovery (see discusison)
-set.seed(313965)
-# If you want to reproduce our robustness replicates, you can use the following seeds:
-# R1 = 582477
-# R2 = 2009
-# R3 = 25848
-# R4 = 10106
+set.seed(17022019)
 
 mothertable = read.csv("./data/input/curated_mothertable20200515.lfs.txt.gz", sep = "\t")
 # Remove any genes are not differentially expressed
@@ -37,6 +29,9 @@ pheno = pheno[c(names(pheno)[c(1, 2, 3)], important.traits)]
 pheno$Day = paste("d", pheno$DAS, sep = "")
 
 # Merge by Plant.ID and Day (and Treatment, but that doesn't matter)
+# We lose a number of samples here because we only have comparable phenotyping
+# data between DAS 20 and 35. Even some samples at DAS 20 are lost because
+# they were apparently not phenotyped with the new configuration before sampling.
 pheno.merged = merge(mothertable.mapping, pheno)
 
 options("expressions" = 50000)
@@ -89,6 +84,20 @@ for (trait in important.traits) {
   selected_genes = data.frame(aggregate(medianImp ~ gene, data = confirmed.genes.allRuns, FUN = median))
   selected_genes$trait = trait
   important.genes = rbind(important.genes, selected_genes)
+
+  # Do Leave-one-out cross-validation
+  mothertable.forBoruta = mothertable.forBoruta[c(trait, as.character(selected_genes$gene))]
+  write("i,Value,Prediction",file=paste0("data/results/cv/loocv_genes_",trait,".csv"))
+  for (i in 1:nrow(mothertable.forBoruta)) {
+    data.train = mothertable.forBoruta[-i, ]
+    data.test  = mothertable.forBoruta[i, ]
+
+    data.train.x = subset(data.train, select = selected_genes$gene)
+    data.train.y = data.train[, trait]
+    model = randomForest(data.train.x, data.train.y, ntree = 1000)
+    write(paste(i, data.test[, trait], predict(model, newdata = subset(data.test, select = selected_genes$gene)), sep=","),file=paste0("data/results/cv/loocv_genes_",trait,".csv"),append = T)
+  }
 }
 
-write.csv(important.genes, "data/intermediary/gene_selection_result_roughFixed.csv", row.names = FALSE)
+important.genes = important.genes[order(important.genes$trait, important.genes$gene), ]
+write.csv(important.genes, "data/results/gene_selection_result_roughFixed.csv", row.names = FALSE)
