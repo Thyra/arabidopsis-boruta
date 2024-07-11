@@ -65,14 +65,27 @@ impCurves.color = aggregate(medianImp ~ trait.type + DAS + imaging.modality, dat
 impCurves.architectural$imaging.modality = "architectural (all)"
 impCurves = rbind(impCurves.architectural, impCurves.color)
 
+# To try and add a colored bar above the x axis (I'm not very happy with it yet)
+# color_stops = c(16, 17, 20, 22, 24, 27, 30, 31, 34, 36)
+# color_stops = (color_stops - 23) / 12
+# colors = c(
+#   "#1d6bd7ff", "#f9d984ff", "#f4b45fff", "#ef914fff", "#e45839ff", "#b82e26ff", "#891c23ff", "#6d998eff", "#4f919cff", "#347092ff"
+# )
+# And then add to the plot
+#   geom_segment(
+#                aes(x = DAS, xend = DAS,
+#                    y = -1, yend = -4, color = as.integer(DAS), linewidth=2),
+#                show.legend = FALSE) + 
+#                scale_colour_gradientn(values = color_stops , colors=colors)
+# Perhaps this here would be a better approach: https://stackoverflow.com/questions/66919738/how-do-i-change-the-colour-of-the-background-to-the-x-axis-ticks-in-ggplot2
+
 pdf("plots/cumulated_trait_importance.pdf", width = 10)
 print(ggplot(impCurves, aes(DAS, medianImp, fill = imaging.modality)) +
         geom_bar(stat="identity", position = "stack") +
-        scale_fill_manual(values=c("#009E73","#CC79A7","#0072B2","#D55E00"))) + labs(fill="Trait Category") +
+        scale_fill_manual(values=c("#895737","#FFDCCC","#210B2C","#7EA16B"))) + labs(fill="Trait Category") +
         geom_segment(x = 7.5, xend=7.5, y=0, yend=60, linetype="dashed", color = "black", size=.7) +
   theme_minimal() +
   geom_segment(x = 8.5, xend=8.5, y=0, yend=26, linetype="dashed", color = "black", size=.7) +
   annotate("text", x=7.8, y=52, label= "Rewatering", hjust=0) +
   annotate("text", x=8.8, y=22, label= "Baskets", hjust=0)
 dev.off()
-
