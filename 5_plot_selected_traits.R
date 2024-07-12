@@ -27,12 +27,9 @@ library(Rmisc)
 library(gridExtra)
 library(grid)
 
-# Use the same color scheme as in Panel A
-color_stops = c(10, 16, 17, 20, 22, 24, 27, 30, 31, 34, 36)
-color_stops = (color_stops - 10)/26
-colors = c(
-  "#1d6bd7ff", "#1d6bd7ff", "#f9d984ff", "#f4b45fff", "#ef914fff", "#e45839ff", "#b82e26ff", "#891c23ff", "#6d998eff", "#4f919cff", "#347092ff"
-)
+source("./colors.R")
+color_stops = ((10:36) - 10) / 26
+colors = stress_day_colors[10:36]
 
 pdf("plots/selected_traits.pdf", height=4)
 for(t in keep_traits) {
@@ -50,8 +47,8 @@ for(t in keep_traits) {
     geom_point(aes(x = DAS, y = impY), color="black") +
     theme_minimal() +
     theme(legend.position = "none") +
-    scale_y_continuous(sec.axis = sec_axis(trans=function(x) {(x - min(merged2$lower, na.rm=T))/(max(merged2$upper, na.rm=T) - min(merged2$lower, na.rm=T)) * max(traits$meanImp, na.rm=T)}, name = "Trait Importance"))
-
+    xlim(10, 35) +
+    scale_y_continuous(sec.axis = sec_axis(trans=function(x) {(x - min(merged2$lower, na.rm=T))/(max(merged2$upper, na.rm=T) - min(merged2$lower, na.rm=T)) * max(traits$meanImp, na.rm=T)}, name = "trait importance"))
   print(p1)
 }
 dev.off()
@@ -70,24 +67,9 @@ impCurves[impCurves$imaging.modality == "NIR", ]$imaging.modality = "near-infrar
 impCurves[impCurves$imaging.modality == "RGB", ]$imaging.modality = "visible light"
 impCurves[impCurves$imaging.modality == "FLUOR", ]$imaging.modality = "fluorescence"
 
-grob_colors = c(
-      "#e45839", # 24
-      "#D54932", # 25
-      "#C63C2C", # 26
-      "#b82e26", # 27
-      "#A82825", # 28
-      "#982224", # 29
-      "#891c23", # 30
-      "#6d998e", # 31
-      "#639692", # 32
-      "#599397", # 33
-      "#4f919c", # 34
-      "#418097" # 35
-      # 36: #347092ff
-)
 muh_grob <- grid::rectGrob(
   x=1:12, y=0, gp=gpar(
-    col=NA, fill=grob_colors, alpha=1))
+    col=NA, fill=stress_day_colors[24:35], alpha=1))
 
 pdf("plots/cumulated_trait_importance.pdf", width = 10)
 print(ggplot(impCurves, aes(DAS, medianImp, fill = imaging.modality)) +
