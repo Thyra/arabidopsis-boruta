@@ -19,3 +19,9 @@ stress_day_colors = c(
   "#418097", # 35
   colorRampPalette(c("#347092", "#1d6bd7"))(10) # 36 - 45
 )
+
+trait_category_colors =c(
+  "geometry" = "#895737",
+  "intensity.fluo" = "#FFDCCC",
+  "intensity.nir" = "#210B2C",
+  "intensity.vis" = "#7EA16B")

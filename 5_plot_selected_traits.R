@@ -74,7 +74,7 @@ muh_grob <- grid::rectGrob(
 pdf("plots/cumulated_trait_importance.pdf", width = 10)
 print(ggplot(impCurves, aes(DAS, medianImp, fill = imaging.modality)) +
   geom_bar(stat="identity", position = "stack") +
-  scale_fill_manual(values=c("#895737","#FFDCCC","#210B2C","#7EA16B"))) + labs(fill="Trait Category") +
+  scale_fill_manual(values = unname(trait_category_colors))) + labs(fill = "Trait Category") +
   geom_segment(x = 7.5, xend=7.5, y=0, yend=60, linetype="dashed", color = "black", linewidth=.7) +
   theme_minimal() +
   theme(text = element_text(size = 16)) +
