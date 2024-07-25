@@ -17,20 +17,21 @@ sink("data/intermediary/network.dot")
 cat("digraph G {\n")
 cat('overlap="false"\n')
 
-for (category in unique(important_genes$trait.category)) {
-  nodes = unique(important_genes[important_genes$trait.category == category,])
-  cat(paste0('"', nodes$trait, '" [label="', nodes$label, '" shape=box fontcolor=',ifelse(category == "intensity.fluo", "black", "white"),' fillcolor="', trait_category_colors[category],'" style=filled fontsize=40]\n'))
-}
-
-cat(paste0('"', as.character(unique(important_genes$gene)), '" [label="."]\n'))
+cat(paste0('"', as.character(unique(important_genes$gene)), '" [label="-" color="#000000bb" fontcolor="#000000bb" fillcolor="#ffffffbb"]\n'))
 
 # cat(paste0('"', ordered.genes, '"', " [fillcolor=orange style=filled]\n"))
-cat(paste0('"', important_genes$gene, '" -> ', '"', important_genes$trait, '"[weight=',important_genes$medianImp,', penwidth=',important_genes$medianImp,' color="#00000080" arrowhead=none] \n'))
+cat(paste0('"', important_genes$gene, '" -> ', '"', important_genes$trait, '"[weight=',important_genes$medianImp,', penwidth=',important_genes$medianImp,' color="',trait_category_colors[important_genes$trait.category],'bb" arrowhead=none] \n'))
 #cat(paste0('"', important_genes$gene, '" -> ', '"', important_genes$trait.x, '"\n'))
+
+for (category in unique(important_genes$trait.category)) {
+  nodes = unique(important_genes[important_genes$trait.category == category,])
+  cat(paste0('"', nodes$trait, '" [label="', nodes$label, '" shape=box fontcolor=',ifelse(category == "intensity.fluo", "black", "white"),' fillcolor="', trait_category_colors[category],'" style=filled fontsize=50 width=',nchar(nodes$label)*30/72,']\n'))
+}
+
 cat("}")
 sink()
 
 # The actual network images I used were done in Cytoscape; just import the dot file using the plugin http://apps.cytoscape.org/apps/dotapp
 # and then clicking "prefuse force directed layout"
-system("neato -Tpdf data/intermediary/network.dot > data/intermediary/network.pdf")
+system("neato -Tpdf data/intermediary/network.dot > plots/network.pdf")
 
