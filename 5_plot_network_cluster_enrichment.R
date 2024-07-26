@@ -63,4 +63,55 @@ sankeyNetwork(Links = links, Nodes = nodes,
               fontSize= 12, nodeWidth = 30, colourScale=my_color)
 
 
+# Plot gene expression per trait category
+library(stringr)
+source("colors.R")
+mothertable = read.csv("data/input/curated_mothertable20200515.lfs.txt.gz", sep="\t")
+# Remove any genes are not differentially expressed
+mothertable = mothertable[mothertable$differentialinatleastoneconstrast == "TRUE", ]
+row.names(mothertable) = mothertable$target_id
+# We're only using the TPMs
+mothertable = mothertable[43:81]
+colnames(mothertable) <- sub("_tpm$", "", colnames(mothertable))
+# Transpose it so that we have "HarvestX_repY" --> "Gene 1", "Gene 2", ...
+mothertable.transposed = as.data.frame(t(mothertable))
+mothertable.transposed$Mothertable.ID = row.names(mothertable.transposed)
+mothertable.transposed$Treatment = str_split_fixed(mothertable.transposed$Mothertable.ID, "_", 3)[,2]
+mothertable.transposed$DAS = as.numeric(str_remove(str_split_fixed(mothertable.transposed$Mothertable.ID, "_", 3)[,1], "H[0-9]+d"))
+# Normalize TPMs
+mothertable.transposed[,1:(ncol(mothertable.transposed) - 3)] = scale(mothertable.transposed[1:(ncol(mothertable.transposed) - 3)])
+
+treatment_d = mothertable.transposed[mothertable.transposed$Treatment == "D",]
+treatment_ww = mothertable.transposed[mothertable.transposed$Treatment == "WW",]
+
+pdf("plots/subnetwork_gene_expression.pdf", width=1.5*5, height=0.6*5)
+par(mar=c(2, 4, 2.5, 0), cex.main=1.5, cex.lab=1.5, cex.axis=1.5)
+for (category in unique(important_genes$trait.category)) {
+  print(paste0("Plotting ", category))
+  category_label = c(
+    "geometry" = "architectural (all)", 
+    "intensity.fluo" = "fluorescence", 
+    "intensity.nir" = "NIR",
+    "intensity.vis" = "VIS"
+  )[category]
+  genes = unique(important_genes[important_genes$trait.category == category,]$gene)
+  plot(1, type="n", xlab=ifelse(category == "intensity.vis", "DAS", ""), ylab="", xlim=c(15, 36), ylim=c(-2.5, 4), axes=F, main=category_label)
+  if (category == "intensity.vis")
+    axis(side = 1)
+  axis(side = 2, las=2)
+  for(g in genes) {
+    plant_means_d = aggregate(as.formula(paste(g, "~  DAS")), data = treatment_d, FUN = mean)
+    plant_means_ww = aggregate(as.formula(paste(g, "~  DAS")), data = treatment_ww, FUN = mean)
+    
+    lines(plant_means_ww$DAS, plant_means_ww[,g], col=paste0(stress_day_colors[1], "bb"))
+    
+    segments(x0 = head(plant_means_d$DAS,-1),
+             y0 = head(plant_means_d[,g],-1),
+             x1 = tail(plant_means_d$DAS,-1),
+             y1 = tail(plant_means_d[,g],-1),
+             lwd = 1,
+             col = paste0(stress_day_colors[plant_means_d$DAS+2], "bb"))
+  }
+}
+dev.off()
 
