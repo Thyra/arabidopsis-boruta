@@ -1,7 +1,7 @@
 # This script prepares the input data from 1745AJ for important trait selection by:
 # - filtering columns to only contain top view traits
 # - filter rows to start at DAS 20 after the camera configuration switch
-# - Geting rid of empty columns
+# - Getting rid of empty columns
 # - Filtering traits by the trait selection list
 # - Reshaping the data to wide format (Trait X DAS)
 # - detect outliers (2 SDs below or above median) and replace with the median of that specific treatment and day
@@ -63,3 +63,5 @@ data.nafixed = data.nafixed[colSums(!is.na(data.nafixed)) == nrow(data.nafixed)]
 pheno.fixed = reshape(data.nafixed, direction="long", varying = columns_to_fix, timevar="DAS", times=20:35, sep="_", idvar="Plant.ID")
 
 write.csv(pheno.fixed, "data/intermediary/1745AJ_Phenotyping_nafixed.csv", row.names=F)
+
+
